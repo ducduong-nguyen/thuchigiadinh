@@ -1,0 +1,21 @@
+services:
+  server:
+    build: ./src/server
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./db:/db
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/db/family-budget.db
+      - JWT_SECRET=please-change-this
+  client:
+    build:
+      context: ./src/client
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      - server
+    environment:
+      - DEV_API_TARGET=http://server:4000

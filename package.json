@@ -1,0 +1,9 @@
+{
+  "name": "quan-ly-thu-chi-gia-dinh",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "src/client",
+    "src/server"
+  ]
+}
