@@ -8,7 +8,7 @@ const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 
 const app = express();
-const dbPath = process.env.DB_PATH || path.join('/', 'db', 'family-budget.db');
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'family-budget.db');
 const db = new Database(dbPath);
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
 
