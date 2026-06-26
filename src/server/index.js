@@ -15,6 +15,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
 app.use(cors());
 app.use(express.json());
 
+// ===== THÊM ROUTE CHO ĐƯỜNG DẪN GỐC =====
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Chào mừng đến với API quản lý thu chi gia đình!',
+    endpoints: {
+      categories: '/api/categories',
+      transactions: '/api/transactions',
+      auth: '/api/auth',
+      users: '/api/users',
+      stats: '/api/stats',
+      export: '/api/export'
+    },
+    docs: 'https://github.com/ducduong-nguyen/thuchigiadinh'
+  });
+});
+// ===== KẾT THÚC THÊM ROUTE =====
+
 const initDatabase = () => {
   db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -62,7 +79,6 @@ const initDatabase = () => {
 
   const accountCount = db.prepare('SELECT COUNT(*) AS count FROM accounts').get().count;
   if (accountCount === 0) {
-    // create simple dev accounts mapped to the seeded users
     const getUser = db.prepare('SELECT id FROM users WHERE name = ?');
     const insertAccount = db.prepare('INSERT INTO accounts (userId, username, passwordHash) VALUES (?, ?, ?)');
     const pw = bcrypt.hashSync('pass123', 10);
@@ -72,7 +88,6 @@ const initDatabase = () => {
     const u4 = getUser.get('Cháu'); if (u4) insertAccount.run(u4.id, 'chau', pw);
   }
 
-  // ensure a simple admin account exists for development convenience
   const adminAcc = db.prepare('SELECT * FROM accounts WHERE username = ?').get('admin');
   if (!adminAcc) {
     const insertUser = db.prepare('INSERT INTO users (name, role) VALUES (?, ?)');
@@ -122,7 +137,6 @@ function authMiddleware(req, res, next) {
 app.post('/api/auth/register', (req, res) => {
   const { name, username, password, role } = req.body;
   if (!username || !password || !name) return res.status(400).json({ error: 'Missing fields' });
-  // create user
   const insertUser = db.prepare('INSERT INTO users (name, role) VALUES (?, ?)');
   const userResult = insertUser.run(name, role || 'user');
   const userId = userResult.lastInsertRowid;
@@ -148,7 +162,6 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 app.get('/api/users', authMiddleware, (req, res) => {
-  // return only the authenticated user's profile
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.auth.userId);
   res.json([user]);
 });
@@ -158,7 +171,6 @@ app.get('/api/categories', (req, res) => {
   res.json(categories);
 });
 
-// Transactions - require auth and only operate on the authenticated user's data
 app.get('/api/transactions', authMiddleware, (req, res) => {
   const transactions = db.prepare(`
     SELECT t.*, u.name AS userName, c.name AS categoryName
@@ -217,7 +229,6 @@ app.get('/api/stats', authMiddleware, (req, res) => {
   res.json({ totalIncome, totalExpense, byCategory });
 });
 
-// Export Excel
 app.get('/api/export/excel', authMiddleware, async (req, res) => {
   const userId = req.auth.userId;
   const rows = db.prepare(`
@@ -243,7 +254,6 @@ app.get('/api/export/excel', authMiddleware, async (req, res) => {
   res.send(Buffer.from(buf));
 });
 
-// Export PDF
 app.get('/api/export/pdf', authMiddleware, (req, res) => {
   const userId = req.auth.userId;
   const rows = db.prepare(`
